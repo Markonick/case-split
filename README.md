@@ -33,8 +33,18 @@ Turn this into a runnable **old-vs-new** vertical slice, all offline:
    uses is selectable (e.g. a `WORLD=old|new` switch).
 3. **The in-memory repo is the "fake DB"** — no Postgres, no network. A real SQLAlchemy
    adapter would sit behind the same port (a stub is fine; it is not run here).
-4. **A way to run and compare the two worlds** — e.g. `make run-old` / `make run-new` and a
-   comparison that drives the same scenario through both and shows how they differ.
+4. **A way to run and compare the two worlds** — `make run-old` / `make run-new`, plus a
+   comparison that pushes the **same** scenario through both. They are *not* meant to be
+   identical — that's the point. The comparison should assert:
+   - they **agree** on the observable stuff: the customer (scope + email + name + profile),
+     the number of houses, `owner_for` routing per category, dedup (same person → one
+     customer), tombstone (a deleted customer is never reused);
+   - they **diverge** on the drift case: promote, then **rename the person** — the old world
+     still shows the stale name copied on the `Case`, the new world reflects the change
+     because identity lives in one place (the `Customer`).
+
+   That divergence is the whole proof the split is worth doing, so it has to be an
+   **assertion**, not a comment.
 5. **Tests** for both: the old world stays green; the new world proves the behaviours below.
 
 ### New-world behaviours (add a test for each)
